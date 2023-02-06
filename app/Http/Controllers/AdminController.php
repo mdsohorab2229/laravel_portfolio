@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use function Symfony\Component\HttpFoundation\makeDisposition;
 
 class AdminController extends Controller
@@ -77,5 +78,34 @@ class AdminController extends Controller
             return redirect()->route('admin.profile')->with($notification);
         }
 
+    }
+
+    public function changePassword()
+    {
+        return view('admin.admin_change_password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required',
+            'confirm_password' => 'required|same:new_password',
+        ]);
+
+        $hash_had_password = Auth::user()->password;
+
+        if (Hash::check($request->current_password, $hash_had_password)) {
+
+            $user = User::find(Auth::id());
+            $user->password = bcrypt($request->new_password);
+            $user->save();
+
+            session()->flash('message', 'Password update successfully');
+            return redirect()->back();
+        } else {
+            session()->flash('message', 'Old  Password  is not match');
+            return redirect()->back();
+        }
     }
 }
